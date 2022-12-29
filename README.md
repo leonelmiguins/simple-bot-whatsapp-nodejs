@@ -18,7 +18,7 @@ relação a envio de contéudos possivelmente impróprios, ele também gerencia 
 
 O que esse bot pode fazer?
 
-* ✅ menssagem de boas vindas. [ _automático_ ]\
+* ✅ menssagem de boas vindas. [ _automático_ ]
 * ✅ notifica todos do grupo.
 * ✅ promove membros a adm
 * ✅ anti-link de grupos. [ _automático_ ]
