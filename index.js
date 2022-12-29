@@ -1,37 +1,41 @@
+/*
+Um bot simples para administração de grupos no whatsapp feito em nodejs.
+Criado por: Leonel Miguins.
+Não esqueça de adicionar o bot como administrador do grupo!
+*/
 
 const qrcode = require('qrcode-terminal');
-
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const { MessageMedia } = require('whatsapp-web.js');
+const fs = require("fs");
 
+//criando cliente com LocalAuth para salvar e continuar seções após ler o Qr-Code.
 const client = new Client({
   authStrategy: new LocalAuth(),
 });
     
-
 client.initialize();
-
 client.on('qr', qr => {
   qrcode.generate(qr, {small: true});
 });
 
+//authenticando uma sessão já existente
 client.on('authenticated', () => {
-  console.log('AUTENTICADO!');
-  });
+  console.log('autenticado! continuando sessão...');
+});
 
 client.on('ready', () => {
-  console.log('Conexão estabelecida com sucesso!');
+  console.log("sessão estabelecida com sucesso!");
   
 });
 
 client.on('group_join', (notification) => {
-  // User has joined or been added to the group.
-  console.log('novo membro: ', notification);
-  notification.reply('_novo membro entrou no grupo!_');
+   
+  console.log('novo membro entrou no grupo!'); 
+  notification.reply('_seja bem vindo! fique a vontade e aproveite a estadia e caso queira falar comigo envie */start*_');
 });
 
 client.on('group_update', (notification) => {
-  // Group picture, subject or description has been updated.
+
   console.log('update', notification);
   var id = notification.chatId;
   client.sendMessage(id, '_dados do grupo foram alterados!_');
@@ -40,51 +44,57 @@ client.on('group_update', (notification) => {
 
 // escutando menssagens recebidas
 client.on('message', async (message)  => {
-   
-	/*if(message.body === '#start'){
-      const media = MessageMedia.fromFilePath('bot.jpg');
 
-      client.sendMessage(message.from, media,{caption: 'Olá bem vindo\n*O Bot foi iniciado com sucesso no grupo!*'});
+  if(message.body === '/start'){
+    txt =
+    "*O que esse bot pode fazer?*\n\n"+
+    "✅ menssagem de boas vindas. [ _automático_ ]\n"+
+    "✅ notifica todos do grupo.\n"+
+    "✅ promove membros a adm.\n"+
+    "✅ anti-link de grupos. [ _automático_ ]\n"+
+    "✅ anti-link pornográficos. [ _automático_ ]\n\n"+
+    "》 envie */cmd* para obter a lista de comandos.\n"
 
-  }*/
-
-  if(message.body === '#menu'){
-    client.sendMessage(message.from, '*Funções do bot:*\n\n#bot - informações sobre o bot\n#adm - promover membro a adm'+
-    '\n#marcar-todos - marca todos os membros\n#simule-digitar - simula bot digitando\n#simule-gravar - simula bot gravando áudio')
-
+    client.sendMessage(message.from, txt)
 
   }
 
-  if (message.body === '#bot') {
+  if(message.body === '/cmd')
+  {
+    txt =
+    "*comandos:*\n\n"+
+    "》 promove membro a adm: */adm*\n"+
+    "》 exibe as regras: */regras*\n"+
+    "》 notifica todos: */notif*\n"+
+    "》 sobre o bot: */bot*"
+
+    client.sendMessage(message.from, txt)
+
+  }
+
+  //envia as regras do grupo
+  if (message.body === '/regras') {
+    //buscando as regras no arquivo 'regras.txt'
+    var regras = readFile('regras.txt')
+    var regras = '*Regras:*\n\n'+regras;
+
+    client.sendMessage(message.from, regras);
+  }
+
+  if (message.body === '/bot') {
     const chats = await client.getChats();
     let info = client.info;
     const chat = await message.getChat();
     
     client.sendMessage(message.from, `*Informações do bot:*\n\nNome: *${info.pushname}*\nNúmero: *${info.wid.user}*\nPlataforma: *${info.platform}*\nGrupo: *${chat.name}*\nChats no Pv: *${chats.length}*`);
   }
-
-
-  if (message.body === '#simule-digitar') {
-    const chat = await message.getChat();
-    // simulates typing in the chat
-    chat.sendStateTyping();
-    chat.sendMessage()
-
-  }
-
-  if (message.body === '#simule-gravar') {
-    const chat = await message.getChat();
-    // simulates typing in the chat
-    chat.sendStateRecording(); 
-
-  }
   
   // promover membro a administrador
-  if(message.body === '#adm'){ 
-    client.sendMessage(message.from, '_envia o comando junto com o *@* do membro. exemplo: *#adm @example*_');
+  if(message.body === '/adm'){ 
+    client.sendMessage(message.from, '_envia o comando junto com o *@* do membro. exemplo: */adm @example*_');
   }
 
-  if (message.body.includes('#adm @')){
+  if (message.body.includes('/adm @')){
 
       let chat = await message.getChat();
       var chat_id = chat.id._serialized;
@@ -101,7 +111,7 @@ client.on('message', async (message)  => {
     
       chat = await client.getChatById(chat_id); // Group Id
       await chat.promoteParticipants([user]); // User Id
-      console.log(user+' foi promovido a adm no grupo: '+chat_id);
+      console.log(`${user_name} foi promovido a adm no grupo: ${chat_name}`);
       chat.sendMessage(`_*${user_name}* foi promovido a adm no grupo: *${chat_name}*_`);
       
 
@@ -126,10 +136,10 @@ client.on('message', async (message)  => {
  }
 
   // marcar todos os membros
-  if(message.body === '#marcar-todos') {
+  if(message.body === '/notif') {
     const chat = await message.getChat();
     
-    let text = "_Marcando todos os membros:_ ";
+    let text = "_notificando:_ ";
     let mentions = [];
 
     for(let participant of chat.participants) {
@@ -142,14 +152,16 @@ client.on('message', async (message)  => {
     await chat.sendMessage(text, { mentions });
 }
 
-if(message.body == ''){
-   
-   
-
-
-}
-
     
 });
+
+//função para ler arquivos .txt
+function readFile(file){
+  var dados = fs.readFileSync(file, "utf8");
+   fs.close;
+ 
+   return dados;
+}
+
  
  
